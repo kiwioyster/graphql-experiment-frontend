@@ -1,21 +1,25 @@
 import React from 'react';
-import Highcharts from 'highcharts';
+import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import { useQuery, QueryResult } from '@apollo/react-hooks';
 import {
   YEARLY_RAINFALL,
   MONTHLY_RAINFALL,
   DAILY_RAINFALL,
+  AVG_RAINFALL,
 } from './graphql/get-rainfall';
 import './App.css';
 interface YearlyRainfallData {
-  yearlyRainfall: { rainfall: number; date: string }[];
+  yearlyRainfall: { rainfall: number; date: number }[];
 }
 interface MonthlyRainfallData {
-  monthlyRainfall: { rainfall: number; date: string }[];
+  monthlyRainfall: { rainfall: number; date: number }[];
 }
 interface DailyRainfallData {
-  dailyRainfall: { rainfall: number; date: string }[];
+  dailyRainfall: { rainfall: number; date: number }[];
+}
+interface MonthlyAvgRainfallData {
+  monthlyAvgRainfall: { rainfall: number; month: number }[];
 }
 interface Props {
   granularity: 'year' | 'month' | 'day';
@@ -24,66 +28,133 @@ const Chart: React.FC<Props> = () => {
   const yearly: QueryResult<YearlyRainfallData> = useQuery(YEARLY_RAINFALL);
   const monthly: QueryResult<MonthlyRainfallData> = useQuery(MONTHLY_RAINFALL);
   const daily: QueryResult<DailyRainfallData> = useQuery(DAILY_RAINFALL);
+  const monthlyAvg: QueryResult<MonthlyAvgRainfallData> = useQuery(
+    AVG_RAINFALL
+  );
   const yearlyOptions = {
-    chart: {
-      zoomType: 'x',
-      panning: true,
-      panKey: 'shift',
+    rangeSelector: {
+      enabled: true,
+      inputEnabled: true,
+      x: 0,
+      verticalAlign: 'top',
+      buttonPosition: {
+        align: 'left',
+      },
     },
     title: {
-      text: 'My chart',
+      text: 'Annual rainfall',
     },
     xAxis: {
-      categories: yearly.data?.yearlyRainfall.map((value) => value.date),
+      minRange: 1,
+      scrollbar: {
+        enabled: true,
+      },
+      type: 'datetime',
     },
     series: [
       {
-        data: yearly.data?.yearlyRainfall.map((value) => value.rainfall),
+        data: yearly.data?.yearlyRainfall.map((value) => [
+          value.date,
+          value.rainfall,
+        ]),
       },
     ],
   };
   const monthlyOptions = {
+    rangeSelector: {
+      enabled: true,
+      inputEnabled: true,
+      x: 0,
+      verticalAlign: 'top',
+      buttonPosition: {
+        align: 'left',
+      },
+    },
     chart: {
       zoomType: 'x',
       panning: true,
       panKey: 'shift',
     },
     title: {
-      text: 'My chart',
+      text: 'Monthly rainfall',
     },
     xAxis: {
-      categories: monthly.data?.monthlyRainfall.map((value) => value.date),
+      minRange: 1,
+      scrollbar: {
+        enabled: true,
+      },
+      type: 'datetime',
     },
     series: [
       {
-        data: monthly.data?.monthlyRainfall.map((value) => value.rainfall),
+        data: monthly.data?.monthlyRainfall.map((value) => [
+          value.date,
+          value.rainfall,
+        ]),
+      },
+      {
+        name: 'Average',
+        data: monthly.data?.monthlyRainfall.map((value) => {
+          const d = new Date(value.date);
+          return [
+            value.date,
+            monthlyAvg.data?.monthlyAvgRainfall[d.getMonth()].rainfall,
+          ];
+        }),
       },
     ],
   };
   const dailyOptions = {
+    rangeSelector: {
+      enabled: true,
+      inputEnabled: true,
+      x: 0,
+      verticalAlign: 'top',
+      buttonPosition: {
+        align: 'left',
+      },
+    },
     chart: {
       zoomType: 'x',
       panning: true,
       panKey: 'shift',
     },
     title: {
-      text: 'My chart',
+      text: 'Daily rainfall',
     },
     xAxis: {
-      categories: daily.data?.dailyRainfall.map((value) => value.date),
+      minRange: 1,
+      scrollbar: {
+        enabled: true,
+      },
+      type: 'datetime',
     },
     series: [
       {
-        data: daily.data?.dailyRainfall.map((value) => value.rainfall),
+        data: daily.data?.dailyRainfall.map((value) => [
+          value.date,
+          value.rainfall,
+        ]),
       },
     ],
   };
   return (
     <div className='App'>
-      {(() => {})()}
-      <HighchartsReact highcharts={Highcharts} options={yearlyOptions} />
-      <HighchartsReact highcharts={Highcharts} options={monthlyOptions} />
-      <HighchartsReact highcharts={Highcharts} options={dailyOptions} />
+      <HighchartsReact
+        highcharts={Highcharts}
+        constructorType={'stockChart'}
+        options={yearlyOptions}
+      />
+      <HighchartsReact
+        highcharts={Highcharts}
+        constructorType={'stockChart'}
+        options={monthlyOptions}
+      />
+      <HighchartsReact
+        highcharts={Highcharts}
+        constructorType={'stockChart'}
+        options={dailyOptions}
+      />
     </div>
   );
 };

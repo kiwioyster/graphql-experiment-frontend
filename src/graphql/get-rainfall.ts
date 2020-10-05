@@ -23,3 +23,11 @@ export const DAILY_RAINFALL = gql`
     }
   }
 `;
+export const AVG_RAINFALL = gql`
+  query monthlyAvgRainfall {
+    monthlyAvgRainfall {
+      month
+      rainfall
+    }
+  }
+`;
